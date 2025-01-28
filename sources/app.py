@@ -26,7 +26,6 @@ def cargar_simulacion(id_simulacion):
         print("Error al cargar la simulación:", response.json())
         return None, None, None
 
-# Ejemplo de uso
 angulo1 = 45
 angulo2 = 56
 peso = 890
