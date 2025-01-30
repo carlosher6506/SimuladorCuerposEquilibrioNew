@@ -1,14 +1,14 @@
 import pygame
 import subprocess
-from constants import *
-from physics import calculate_tensions, solution, calculate_body_position
-from graphics import GraphicsManager
-from ui import UI
-import math
+from constants.constant import *
+from physics.physic import calculate_tensions, solution, calculate_body_position
+from graphics.graphic import GraphicsManager
+from interfaces.ui import UI
 
 class PhysicsSimulator:
     def __init__(self):
         pygame.init()
+        # Initialize display with software rendering for better compatibility
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
         pygame.display.set_caption("Simulador de Cuerpos en Equilibrio")
         
@@ -26,7 +26,6 @@ class PhysicsSimulator:
         self.drag_start_x = 0
         self.drag_start_y = 0
         self.start_weight = INITIAL_WEIGHT
-        self.body_image_rect = self.graphics.peso_image.get_rect(center=(675, 270))
         
         # Change flags
         self.peso_cambiado = False
@@ -35,14 +34,12 @@ class PhysicsSimulator:
 
     def handle_events(self):
         """Handle all pygame events."""
-        ui = UI(self.graphics)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
-            
+                
             self._handle_mouse_events(event)
             self._handle_keyboard_events(event)
-            ui.handle_event(event, weight, theta1, theta2)
             
         return True
 
@@ -57,47 +54,70 @@ class PhysicsSimulator:
 
     def _handle_mouse_down(self, event):
         """Handle mouse button down events."""
-        # Coordenadas de las cuerdas
-        anchor1_x = WIDTH // 4
-        anchor2_x = 3 * WIDTH // 4
-        anchor_y = HEIGHT // 4
+        mouse_pos = pygame.mouse.get_pos()
         
-        if self.body_image_rect.collidepoint(event.pos):
+        # Converter button
+        if pygame.Rect(40, HEIGHT - 22, 180, 40).collidepoint(mouse_pos):
+            self.ui.conversor_visible = not self.ui.conversor_visible
+        
+        # Graph button
+        elif pygame.Rect(240, HEIGHT - 22, 180, 40).collidepoint(mouse_pos):
+            self._toggle_graph()
+        
+        # Return button
+        elif pygame.Rect(440, HEIGHT - 22, 180, 40).collidepoint(mouse_pos):
+            self._return_to_menu()
+        
+        # Convert button in converter
+        elif self.ui.conversor_visible:
+            convert_button = pygame.Rect(65, 680, 300, 40)
+            input_field = pygame.Rect(65, 630, 300, 45)
+            
+            if convert_button.collidepoint(mouse_pos):
+                try:
+                    value = float(self.ui.text)
+                    self.ui.result_conversion = value * GRAVITY
+                except ValueError:
+                    print("Please enter a valid number")
+            elif input_field.collidepoint(mouse_pos):
+                self.ui.active = True
+            else:
+                self.ui.active = False
+        
+        # Handle weight dragging
+        else:
             self.dragging = True
-            self.drag_start_y = event.pos[1] - self.body_image_rect.centery
-
-        # Verificar si se hace clic sobre las cuerdas
-        if pygame.Rect(anchor1_x - 10, anchor_y - 200, 20, 400).collidepoint(event.pos):
-            # Si se hace clic en la cuerda 1, anclamos la pesa en esta cuerda
-            self.body_image_rect.center = (anchor1_x, self.body_image_rect.centery)
-        elif pygame.Rect(anchor2_x - 10, anchor_y - 200, 20, 400).collidepoint(event.pos):
-            # Si se hace clic en la cuerda 2, anclamos la pesa en esta cuerda
-            self.body_image_rect.center = (anchor2_x, self.body_image_rect.centery)
-
-        self.dragging = True
-        self.drag_start_x, self.drag_start_y = pygame.mouse.get_pos()
+            self.drag_start_x, self.drag_start_y = mouse_pos
+            self.start_weight = self.weight
 
     def _handle_mouse_drag(self, event):
-        if self.dragging:
-                    mouse_x, mouse_y = pygame.mouse.get_pos()
-
-                    # Coordenadas de las cuerdas
-                    anchor1_x = WIDTH // 4
-                    anchor2_x = 3 * WIDTH // 4
-                    anchor_y = HEIGHT // 4
-                    
-                    # Calculamos la nueva posición y limitamos el movimiento en el eje Y
-                    new_y = mouse_y - self.drag_start_y
-                    new_y = max(min(new_y, HEIGHT - 50), 50)
-
-                    # Actualizar el peso en función de la distancia vertical
-                    self.weight = max(50, min(1000, self.start_weight + (mouse_y - self.drag_start_y) * 2))
-
+        """Handle mouse drag events."""
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        delta_y = mouse_y - self.drag_start_y
+        
+        # Update weight based on drag
+        self.weight = max(0, self.start_weight + delta_y * 2)
+        self.peso_cambiado = True
 
     def _handle_keyboard_events(self, event):
         """Handle keyboard events."""
-        keys = pygame.key.get_pressed()
+        if event.type == pygame.KEYDOWN:
+            if self.ui.active:
+                if event.key == pygame.K_RETURN:
+                    try:
+                        value = float(self.ui.text)
+                        self.ui.result_conversion = value * GRAVITY
+                    except ValueError:
+                        print("Please enter a valid number")
+                elif event.key == pygame.K_BACKSPACE:
+                    self.ui.text = self.ui.text[:-1]
+                else:
+                    # Only allow numbers and decimal point
+                    if event.unicode.isnumeric() or event.unicode == '.':
+                        self.ui.text += event.unicode
         
+        # Handle angle adjustments
+        keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.theta1 = max(0, self.theta1 - 1)
             self.theta1_cambiado = True
@@ -139,10 +159,6 @@ class PhysicsSimulator:
     def render(self):
         """Render the current frame."""
         self.ui.draw_scene(self.screen, self.weight, self.theta1, self.theta2)
-        
-        # Dibuja la imagen del peso en la nueva posición
-        self.screen.blit(self.graphics.peso_image, self.body_image_rect)
-        
         pygame.display.flip()
 
     def run(self):

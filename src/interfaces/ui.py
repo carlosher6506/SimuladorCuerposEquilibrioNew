@@ -1,13 +1,10 @@
 import pygame
-from constants import *
-from physics import calculate_tensions, solution, calculate_body_position, conversor
+from constants.constant import *
+from physics.physic import calculate_tensions, solution, calculate_body_position, conversor
 
 class UI:
     def __init__(self, graphics_manager):
         self.graphics = graphics_manager
-        self.peso_image = self.graphics.peso_image
-        self.fondo_image = self.graphics.fondo_image
-        self.polea_image = self.graphics.polea_image
         self.conversor_visible = False
         self.mostrar_grafico = False
         self.superficie_grafico = None
@@ -29,12 +26,8 @@ class UI:
         
         body_x, body_y = calculate_body_position(anchor1_x, anchor2_x, anchor_y, T1, T2, theta1, theta2)
         
-        # Draw background and basic elements
-        self._draw_background(screen, anchor1_x, anchor_y)
-        
-        # Draw ropes
-        self.graphics.draw_rope(screen, (anchor1_x, anchor_y), (body_x, body_y))
-        self.graphics.draw_rope(screen, (anchor2_x, anchor_y), (body_x, body_y))
+        # Draw all visual elements using graphics manager
+        self.graphics.draw_scene(screen, body_x, body_y, anchor1_x, anchor2_x, anchor_y, theta1, theta2)
         
         # Draw measurements and text
         self._draw_measurements(screen, body_x, body_y, T11, T22, theta1, theta2, weight, mass)
@@ -49,13 +42,6 @@ class UI:
         # Draw graph if visible
         if self.mostrar_grafico and self.superficie_grafico:
             self._draw_graph(screen)
-            
-        
-
-    def _draw_background(self, screen, anchor1_x, anchor_y):
-        """Draw background elements."""
-        fondo_image_rect = self.graphics.fondo_image.get_rect(center=(anchor1_x + 335, anchor_y + 340))
-        screen.blit(self.graphics.fondo_image, fondo_image_rect)
 
     def _draw_measurements(self, screen, body_x, body_y, T11, T22, theta1, theta2, weight, mass):
         """Draw all measurement text."""
@@ -77,15 +63,14 @@ class UI:
     def _draw_ui_elements(self, screen):
         """Draw UI buttons and elements."""
         # Draw header and footer bars
-        pygame.draw.rect(screen, BLUE, (0, 0, WIDTH, 45))
-        pygame.draw.rect(screen, BLUE, (0, HEIGHT - 28, WIDTH, 28))
+        pygame.draw.rect(screen, BLUE, (0, 0, WIDTH + 400, 45))
+        pygame.draw.rect(screen, BLUE, (0, HEIGHT - 25, WIDTH, 45))
         
         # Draw buttons
         buttons = [
             ("Conversor", 40, HEIGHT - 22, 180, 40),
             ("Graficar", 240, HEIGHT - 22, 180, 40),
-            ("Regresar", 440, HEIGHT - 22, 180, 40),
-            ("Guardar", 640, HEIGHT - 22, 180, 40)
+            ("Regresar", 440, HEIGHT - 22, 180, 40)
         ]
         
         for text, x, y, w, h in buttons:
@@ -131,26 +116,3 @@ class UI:
                      self.superficie_grafico.get_height() + 20), 2)
         
         screen.blit(self.superficie_grafico, (grafico_x, grafico_y))
-        
-    def handle_event(self, event, weight, theta1, theta2):
-        """Handle events, including button clicks."""
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            mouse_pos = event.pos
-            # Check if the "Guardar" button is clicked
-            if 640 <= mouse_pos[0] <= 820 and HEIGHT - 22 <= mouse_pos[1] <= HEIGHT - 22 + 40:
-                # Call function to save the simulation
-                self.save_simulation(weight, theta1, theta2)
-        
-    def save_simulation(self, weight, theta1, theta2):
-        """Send the simulation parameters to the API."""
-        url = "http://localhost:3000/api/simulaciones"
-        data = {
-            "angulo1": theta1,
-            "angulo2": theta2,
-            "peso": weight
-        }
-        response = requests.post(url, json=data)
-        if response.status_code == 201:
-            print("Simulación guardada exitosamente.")
-        else:
-            print(f"Error al guardar simulación: {response.status_code}")

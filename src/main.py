@@ -1,4 +1,4 @@
-from simulator import PhysicsSimulator
+from simulators.simulator import PhysicsSimulator
 
 def main():
     simulator = PhysicsSimulator()
