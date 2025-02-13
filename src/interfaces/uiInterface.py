@@ -1,4 +1,5 @@
 import pygame
+import requests
 from config.constant import *
 from core.physic import calculate_tensions, solution, calculate_body_position, conversor
 
@@ -11,6 +12,38 @@ class UI:
         self.active = False
         self.text = '50'
         self.result_conversion = 0
+        
+    def save_simulation(self, weight, theta1, theta2, tension1, tension2):
+        """Envía los datos de la simulación al backend para guardarlos."""
+        url = "http://localhost:5000/api/simulations"
+        data = {
+            "weight": weight,
+            "theta1": theta1,
+            "theta2": theta2,
+            "tension1": tension1,
+            "tension2": tension2,
+        }
+        try:
+            response = requests.post(url, json=data)
+            if response.status_code == 201:
+                print("Simulación guardada exitosamente!")
+            else:
+                print("Error guardando la simulación:", response.text)
+        except Exception as e:
+            print("Error de conexión:", e)
+            
+    def load_simulation(self, simulation_id):
+        """Carga una simulación guardada desde el backend."""
+        url = f"http://localhost:5000/api/simulations/{simulation_id}"
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                return response.json()  # Devuelve los parámetros de la simulación
+            else:
+                print("Error cargando la simulación:", response.text)
+        except Exception as e:
+            print("Error de conexión:", e)
+        return None
 
     def draw_scene(self, screen, weight, theta1, theta2):
         """Draw the complete simulation scene."""
@@ -63,20 +96,36 @@ class UI:
     def _draw_ui_elements(self, screen):
         """Draw UI buttons and elements."""
         # Draw header and footer bars
-        pygame.draw.rect(screen, BLUE, (0, 0, WIDTH + 400, 45))
-        pygame.draw.rect(screen, BLUE, (0, HEIGHT - 25, WIDTH, 45))
+        pygame.draw.rect(screen, BLUE, (0, 0, WIDTH, 45))
+        pygame.draw.rect(screen, BLUE, (0, HEIGHT - 28, WIDTH, 28))
         
         # Draw buttons
         buttons = [
             ("Conversor", 40, HEIGHT - 22, 180, 40),
             ("Graficar", 240, HEIGHT - 22, 180, 40),
-            ("Regresar", 440, HEIGHT - 22, 180, 40)
+            ("Regresar", 440, HEIGHT - 22, 180, 40),
+            ("Guardar", 640, HEIGHT - 22, 180, 40)
         ]
         
         for text, x, y, w, h in buttons:
             pygame.draw.rect(screen, BLUE, (x, y, w, h))
             text_surface = self.graphics.font_large.render(text, True, WHITE)
             screen.blit(text_surface, (x + 10, y + 5))
+            
+            # Manejar clic en el botón "Guardar"
+            if text == "Guardar":
+                mouse_pos = pygame.mouse.get_pos()
+                mouse_click = pygame.mouse.get_pressed()
+                if (x <= mouse_pos[0] <= x + w and y <= mouse_pos[1] <= y + h) and mouse_click[0]:
+                    # Obtén los parámetros de la simulación actual
+                    weight = float(self.text)  # Peso ingresado por el usuario
+                    theta1 = 45  # Ángulo 1 (debes obtenerlo de la simulación)
+                    theta2 = 30  # Ángulo 2 (debes obtenerlo de la simulación)
+                    tension1 = 100  # Tensión 1 (debes obtenerlo de la simulación)
+                    tension2 = 80   # Tensión 2 (debes obtenerlo de la simulación)
+
+                    # Guardar la simulación
+                    self.save_simulation(weight, theta1, theta2, tension1, tension2)
 
     def _draw_converter(self, screen):
         """Draw the converter interface."""

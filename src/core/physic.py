@@ -38,3 +38,12 @@ def calculate_body_position(anchor1_x, anchor2_x, anchor_y, T1, T2, theta1, thet
 def conversor(kg):
     """Convert kilograms to Newtons."""
     return kg * 9.81
+
+def get_current_parameters(self):
+    """Devuelve los parámetros actuales de la simulación."""
+    return {
+        "theta1": self.theta1,
+        "theta2": self.theta2,
+        "tension1": self.tension1,
+        "tension2": self.tension2,
+    }
