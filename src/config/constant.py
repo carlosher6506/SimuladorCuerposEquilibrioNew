@@ -9,6 +9,7 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 71, 125)
+RED = ()
 
 # Physics constants
 GRAVITY = 9.81
