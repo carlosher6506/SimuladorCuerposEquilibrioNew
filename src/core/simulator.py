@@ -8,7 +8,6 @@ from interfaces.uiInterface import UI
 class PhysicsSimulator:
     def __init__(self):
         pygame.init()
-        # Initialize display with software rendering for better compatibility
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
         pygame.display.set_caption("Simulador de Cuerpos en Equilibrio")
         
@@ -64,9 +63,6 @@ class PhysicsSimulator:
         elif pygame.Rect(240, HEIGHT - 22, 180, 40).collidepoint(mouse_pos):
             self._toggle_graph()
         
-        # Return button
-        elif pygame.Rect(440, HEIGHT - 22, 180, 40).collidepoint(mouse_pos):
-            self._return_to_menu()
         
         # Convert button in converter
         elif self.ui.conversor_visible:
@@ -139,10 +135,10 @@ class PhysicsSimulator:
             self.ui.superficie_grafico = self.graphics.create_graph(
                 self.weight, self.theta1, self.theta2, T1, T2)
 
-    def _return_to_menu(self):
+    #def _return_to_menu(self):
         """Return to the main menu."""
-        subprocess.Popen(["python", "sources/menu.py"])
-        pygame.quit()
+        #subprocess.Popen(["python", "sources/menu.py"])
+        #pygame.quit()
 
     def update(self):
         """Update simulation state."""
