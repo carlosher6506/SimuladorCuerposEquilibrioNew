@@ -152,10 +152,7 @@ class PhysicsSimulator:
             self.theta1_cambiado = False
             self.theta2_cambiado = False
             
-            """Update simulation state."""
-            state = self.state_manager.get_state()
-            # Update logic here
-            self.state_manager.update_state(state)
+        
 
     def render(self):
         """Render the current frame."""
